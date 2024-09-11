@@ -1,10 +1,16 @@
 import onnxruntime as ort
 from src.utils.utils_segment import preprocess, postprocess
-from PIL import Image
 
 
-def inference(image_path, model_path, threshold_confidence=0.5, threshold_iou=0.7):
-    model = ort.InferenceSession(model_path)
+def inference(
+    image_path, model_path, device="cuda", threshold_confidence=0.5, threshold_iou=0.7
+):
+    model = ort.InferenceSession(
+        model_path,
+        providers=[
+            "CUDAExecutionProvider" if device == "cuda" else "CPUExecutionProvider"
+        ],
+    )
     input = preprocess(image_path)
     outputs = postprocess(
         model.run(None, {"images": input}),
