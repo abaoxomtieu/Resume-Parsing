@@ -14,9 +14,9 @@ class_names = [
     "Interests",
     "Languages",
     "Name",
-    "Profil",
+    "Profile",
     "Projects",
-    "skills",
+    "Skills",
 ]
 number_class_custom = int(len(class_names) + 4)
 img_width, img_height = None, None
@@ -98,7 +98,7 @@ def get_polygon(mask):
     return polygon
 
 
-def postprocess(outputs, threshold):
+def postprocess(outputs, threshold_confidence, threshold_iou):
     objects = []
     for row in extract_box(outputs):
         xc, yc, w, h = row[:4]
@@ -107,7 +107,7 @@ def postprocess(outputs, threshold):
         x2 = (xc + w / 2) / 640 * img_width
         y2 = (yc + h / 2) / 640 * img_height
         prob = row[4:number_class_custom].max()
-        if prob < 0.5:
+        if prob < threshold_confidence:
             continue
         class_id = row[4:number_class_custom].argmax()
         label = class_names[class_id]
@@ -128,7 +128,7 @@ def postprocess(outputs, threshold):
     while objects:
         obj = objects.pop(0)
         result.append(obj)
-        objects = [other_obj for other_obj in objects if iou(other_obj, obj) < 0.7]
+        objects = [other_obj for other_obj in objects if iou(other_obj, obj) < threshold_iou]
     del objects
 
     cropped_images = [
