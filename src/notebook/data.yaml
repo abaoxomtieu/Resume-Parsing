@@ -1,0 +1,6 @@
+train: /cvparsing-2/train/images
+val: /cvparsing-2/valid/images
+test: /cvparsing-2/test/images
+
+nc: 14
+names: ['Achievement', 'Certifications', 'Community', 'Contact', 'Education', 'Experience', 'Interests', 'Languages', 'Name', 'Profil', 'Projects', 'image', 'resume', 'skills']

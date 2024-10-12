@@ -1,0 +1,5 @@
+**/__pycache__/
+.env
+src/model/detect.onnx
+src/model/segment.pt
+# src/model/segment.onnx
