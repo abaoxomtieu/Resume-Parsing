@@ -1,0 +1,9 @@
+fastapi
+python-dotenv
+pytesseract
+opencv-python-headless
+langchain-google-genai
+uvicorn
+python-multipart
+asyncio
+onnxruntime

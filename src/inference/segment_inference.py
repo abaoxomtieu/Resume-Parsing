@@ -1,17 +1,15 @@
 import onnxruntime as ort
 from src.utils.utils_segment import preprocess, postprocess
+import numpy as np
+
+model_path = "./src/model/segment.onnx"
+model = ort.InferenceSession(
+    model_path,
+)
 
 
-def inference(
-    image_path, model_path, device="cuda", threshold_confidence=0.5, threshold_iou=0.7
-):
-    model = ort.InferenceSession(
-        model_path,
-        providers=[
-            "CUDAExecutionProvider" if device == "cuda" else "CPUExecutionProvider"
-        ],
-    )
-    input = preprocess(image_path)
+def inference(image: np.array, threshold_confidence=0.5, threshold_iou=0.7):
+    input = preprocess(image)
     outputs = postprocess(
         model.run(None, {"images": input}),
         threshold_confidence=threshold_confidence,
@@ -20,8 +18,3 @@ def inference(
 
     return outputs
 
-
-if __name__ == "__main__":
-    model_path = "../model/segment.onnx"
-    image_path = "../../test.jpg"
-    print(inference(image_path, model_path))
