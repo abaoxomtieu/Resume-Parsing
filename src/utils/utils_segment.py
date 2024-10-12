@@ -2,9 +2,10 @@ from PIL import Image
 import numpy as np
 import cv2
 from typing import Tuple
-import cv2
-import numpy as np
+from pytesseract import pytesseract
 
+# path_to_tesseract = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# pytesseract.tesseract_cmd = path_to_tesseract
 class_names = [
     "Certifications",
     "Community",
@@ -128,18 +129,52 @@ def postprocess(outputs, threshold_confidence, threshold_iou):
     while objects:
         obj = objects.pop(0)
         result.append(obj)
-        objects = [other_obj for other_obj in objects if iou(other_obj, obj) < threshold_iou]
+        objects = [
+            other_obj for other_obj in objects if iou(other_obj, obj) < threshold_iou
+        ]
     del objects
 
     cropped_images = [
         {
-            "box": unpad_and_resize_boxes(obj[:4], ratio, left, top),
+            "box": list(map(int, unpad_and_resize_boxes(obj[:4], ratio, left, top))),
             "label": obj[4],
-            "prob": obj[5],
+            "prob": int(obj[5]),
         }
         for obj in result
     ]
     return cropped_images
+
+
+def extract_text_dict(outputs):
+    result_dict = {}
+    for output in outputs:
+        label = output.get("label").lower()
+        text = output.get("text")
+        if label in result_dict:
+            result_dict[label] += " " + text
+        else:
+            result_dict[label] = text
+
+    return result_dict
+
+
+def extract_text(outputs, image_origin):
+    for i in range(len(outputs)):
+        image = crop_image(image_origin, outputs[i].get("box"))
+        text = pytesseract.image_to_string(image)
+        outputs[i].update({"text": text})
+        if "text" in outputs[i]:
+            outputs[i]["text"] += text
+        else:
+            outputs[i].update({"text": text})
+    return extract_text_dict(outputs)
+
+
+def crop_image(image, box):
+
+    x1, y1, x2, y2 = map(int, box)
+    cropped_image = image[y1:y2, x1:x2]
+    return cropped_image
 
 
 def resize_and_pad(
@@ -195,3 +230,54 @@ def unpad_and_resize_boxes(boxes, ratio, left, top):
         return boxes.flatten().tolist()
     else:
         return boxes.tolist()
+
+
+def draw_bounding_boxes(image, outputs):
+    # Create a copy of the image to draw on
+    image_with_boxes = image.copy()
+
+    # Define a list of colors for the bounding boxes
+    label_colors = {
+        "Certifications": (255, 0, 0),
+        "Community": (0, 255, 0),
+        "Contact": (0, 0, 255),
+        "Education": (255, 128, 0),
+        "Experience": (255, 0, 255),
+        "Interests": (128, 128, 128),
+        "Languages": (128, 0, 0),
+        "Name": (0, 128, 0),
+        "Profile": (0, 0, 128),
+        "Projects": (128, 128, 0),
+        "Skills": (128, 0, 128),
+    }
+
+    # Draw each bounding box and text
+    for output in outputs:
+        box = output["box"]
+        label = output["label"]
+        text = output.get("text", "")
+
+        # Get the color for the label
+        color = label_colors.get(
+            label, (255, 255, 255)
+        )  # Default to white if label not found
+
+        # Draw the bounding box
+        x1, y1, x2, y2 = box
+        cv2.rectangle(image_with_boxes, (x1, y1), (x2, y2), color, 2)
+        # Draw the label and text
+        cv2.putText(
+            image_with_boxes,
+            f"{label}",
+            (x1, y1 - 10),
+            cv2.FONT_ITALIC,
+            2,
+            color,
+            2,
+        )
+    image_with_boxes_rgb = cv2.cvtColor(image_with_boxes, cv2.COLOR_BGR2RGB)
+
+    # Convert the OpenCV image (numpy array) to a PIL image
+    image_pil = Image.fromarray(image_with_boxes_rgb)
+
+    return image_pil

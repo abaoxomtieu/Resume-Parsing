@@ -2,4 +2,5 @@
 .env
 src/model/detect.onnx
 src/model/segment.pt
+.venv
 # src/model/segment.onnx
