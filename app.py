@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import numpy as np
 from src.config.llm import llm
-from src.prompt.promt import format_prompt
+from src.prompt.promt import prompt_experience, format_prompt
 from langchain_core.output_parsers import JsonOutputParser
 import uvicorn
 from io import BytesIO
@@ -18,6 +18,7 @@ import os
 import functools
 import threading
 from src.inference.segment_inference import inference
+from PIL import Image
 load_dotenv()
 app = FastAPI(docs_url="/")
 app.add_middleware(
@@ -28,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 executor = ThreadPoolExecutor(max_workers=int(os.cpu_count() + 4))
+parser = JsonOutputParser()
 
 
 def run_in_thread(func, *args, **kwargs):
@@ -52,13 +54,22 @@ def predict_func(threshold_confidence, threshold_iou, image):
         threshold_iou=threshold_iou,
     )
     text = extract_text(outputs=outputs, image_origin=image)
+
+    experience = text.get("experience", None)
+    chain = prompt_experience | llm | parser
+    experience_extracted = chain.invoke({"user_input": experience})
+    text.pop("experience", None)
+    promt_format_cv = format_prompt.format(input=text)
+    cv_output = llm.invoke(promt_format_cv)
+    cv_output_response = parser.parse(cv_output)
+    cv_output_response["experience"] = experience_extracted
     image = draw_bounding_boxes(image, outputs)
     buffer = BytesIO()
     image.save(buffer, format="JPEG")
     buffer.seek(0)
 
     image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    response = {"outputs": text, "image_base64": image_base64}
+    response = {"outputs": cv_output_response, "image_base64": image_base64}
     return response
 
 

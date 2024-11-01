@@ -4,19 +4,15 @@ import cv2
 from typing import Tuple
 from pytesseract import pytesseract
 
-# path_to_tesseract = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-# pytesseract.tesseract_cmd = path_to_tesseract
+path_to_tesseract = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+pytesseract.tesseract_cmd = path_to_tesseract
 class_names = [
-    "Certifications",
     "Community",
     "Contact",
     "Education",
     "Experience",
     "Interests",
-    "Languages",
-    "Name",
     "Profile",
-    "Projects",
     "Skills",
 ]
 number_class_custom = int(len(class_names) + 4)
@@ -232,22 +228,18 @@ def unpad_and_resize_boxes(boxes, ratio, left, top):
         return boxes.tolist()
 
 
-def draw_bounding_boxes(image, outputs):
+def draw_bounding_boxes(image, outputs, save_path="output_image.jpg"):
     # Create a copy of the image to draw on
     image_with_boxes = image.copy()
 
     # Define a list of colors for the bounding boxes
     label_colors = {
-        "Certifications": (255, 0, 0),
         "Community": (0, 255, 0),
         "Contact": (0, 0, 255),
         "Education": (255, 128, 0),
         "Experience": (255, 0, 255),
         "Interests": (128, 128, 128),
-        "Languages": (128, 0, 0),
-        "Name": (0, 128, 0),
         "Profile": (0, 0, 128),
-        "Projects": (128, 128, 0),
         "Skills": (128, 0, 128),
     }
 
@@ -255,7 +247,6 @@ def draw_bounding_boxes(image, outputs):
     for output in outputs:
         box = output["box"]
         label = output["label"]
-        text = output.get("text", "")
 
         # Get the color for the label
         color = label_colors.get(
@@ -279,5 +270,5 @@ def draw_bounding_boxes(image, outputs):
 
     # Convert the OpenCV image (numpy array) to a PIL image
     image_pil = Image.fromarray(image_with_boxes_rgb)
-
+    image_pil.save(save_path, format="JPEG")
     return image_pil

@@ -2,7 +2,7 @@ import onnxruntime as ort
 from src.utils.utils_segment import preprocess, postprocess
 import numpy as np
 
-model_path = "./src/model/segment.onnx"
+model_path = "./src/model/best.onnx"
 model = ort.InferenceSession(
     model_path,
 )
