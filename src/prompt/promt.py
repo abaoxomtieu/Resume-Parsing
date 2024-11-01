@@ -1,3 +1,5 @@
+from langchain_core.prompts import ChatPromptTemplate
+
 format_prompt = """
 #Role: You are an expert at correcting spelling errors from interviewee's resume information.
 #Instruction:
@@ -10,4 +12,40 @@ You must return JSON containing the same format as the original format:
 
 #Input:
 My resume is as follows: {input}
+
+Output must be in plain text:
 """
+
+prompt_experience = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
+# Role: You are an expert at extracting key information about projects from the "experience" section of an OCR'd resume.
+
+# Instruction:
+You are given a JSON object containing extracted resume data from an OCR model. This data likely contains errors like misspellings, merged words, and extracted noise. Your task is to:
+
+1. **Pre-process the "experience" field:**
+    * Correct misspellings using your knowledge of common resume terms and English vocabulary.
+    * Separate merged words and remove any obvious OCR noise.
+
+2. **Identify the "experience" field:** Locate the field labeled "experience" (or a similar label) within the JSON object.
+
+3. **Extract project information:** 
+    * Identify project mentions: Look for keywords and phrases that indicate a project, such as "project," "developed," "implemented," "designed," "contributed to," etc.
+    * Extract project details: For each project mentioned:
+        * Project name or description
+        * Role and contributions
+        * Technologies used
+        * Outcomes and achievements
+
+4. **Structure the output:** Return a JSON object with a "projects" field containing an array of extracted project details. The exact format can be flexible to accommodate variations in the input data.
+
+
+
+""",
+        ),
+        ("human", "{user_input}"),
+    ]
+)
