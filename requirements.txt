@@ -7,3 +7,6 @@ uvicorn
 python-multipart
 asyncio
 onnxruntime
+langgraph
+langchain_community
+python-dotenv
