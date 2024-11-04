@@ -2,9 +2,11 @@ from PIL import Image
 import numpy as np
 import cv2
 from typing import Tuple
+
 from pytesseract import pytesseract
 
-path_to_tesseract = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# path_to_tesseract = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+path_to_tesseract = r"./src/Tesseract-OCR/tesseract.exe"
 pytesseract.tesseract_cmd = path_to_tesseract
 class_names = [
     "Community",
@@ -108,15 +110,6 @@ def postprocess(outputs, threshold_confidence, threshold_iou):
             continue
         class_id = row[4:number_class_custom].argmax()
         label = class_names[class_id]
-        # mask = get_mask(
-        #     row[number_class_custom:25684],
-        #     (x1, y1, x2, y2),
-        #     img_width,
-        #     img_height,
-        #     threshold=threshold,
-        # )
-        # polygon = get_polygon(mask)
-        # objects.append([x1, y1, x2, y2, label, prob, mask, polygon])
         objects.append([x1, y1, x2, y2, label, prob])
 
     # apply non-maximum suppression
@@ -164,6 +157,55 @@ def extract_text(outputs, image_origin):
         else:
             outputs[i].update({"text": text})
     return extract_text_dict(outputs)
+
+
+# from PIL import Image
+# from io import BytesIO
+# import requests
+# import base64
+
+# def convert_image_to_base64(image_np):
+#     """Convert a NumPy array (image) to a base64-encoded string."""
+#     # Convert NumPy array to PIL Image
+#     image_pil = Image.fromarray(image_np)
+
+#     # Save the PIL image to a buffer in PNG format
+#     buffered = BytesIO()
+#     image_pil.save(buffered, format="PNG")
+
+#     # Encode the buffer content as base64
+#     return base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+# def send_image_to_api(image_base64):
+#     """Send the base64-encoded image to the FastAPI API and return the extracted text."""
+#     url = "https://abao77-pytesseract.hf.space/extract_text/"  # Replace with your FastAPI server URL
+#     payload = {"base64_image": image_base64}
+#     response = requests.post(url, json=payload)
+
+#     # Extract text from the response
+#     if response.status_code == 200:
+#         return response.json().get("extracted_text", "")
+#     else:
+#         return ""
+
+# def extract_text(outputs, image_origin):
+#     for i in range(len(outputs)):
+#         # Crop the image using the bounding box
+#         image = crop_image(image_origin, outputs[i].get("box"))
+
+#         # Convert the cropped image to base64
+#         image_base64 = convert_image_to_base64(image)
+
+#         # Call the API to extract text from the image
+#         text = send_image_to_api(image_base64)
+
+#         # Update the "text" field in the outputs list
+#         if "text" in outputs[i]:
+#             outputs[i]["text"] += text
+#         else:
+#             outputs[i].update({"text": text})
+
+#     return extract_text_dict(outputs)
 
 
 def crop_image(image, box):

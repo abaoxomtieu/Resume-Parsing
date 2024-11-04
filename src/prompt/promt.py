@@ -19,38 +19,31 @@ Output must be in JSON format following the same structure as the input.
         ("human", "{user_input}"),
     ]
 )
-
-
-prompt_experience = ChatPromptTemplate.from_messages(
+matching_jd_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """
-# Role: You are an expert at extracting key information about projects from the "experience" section of an OCR'd resume.
+"""
+Role: Expert resume analyzer matching qualifications with the following job requirements:
+{job_description}
 
-# Instruction:
-You are given a JSON object containing extracted resume data from an OCR model. This data likely contains errors like misspellings, merged words, and extracted noise. Your task is to:
-
-1. **Pre-process the "experience" field:**
-    * Correct misspellings using your knowledge of common resume terms and English vocabulary.
-    * Separate merged words and remove any obvious OCR noise.
-
-2. **Identify the "experience" field:** Locate the field labeled "experience" (or a similar label) within the JSON object.
-
-3. **Extract project information:** 
-    * Identify project mentions: Look for keywords and phrases that indicate a project, such as "project," "developed," "implemented," "designed," "contributed to," etc.
-    * Extract project details: For each project mentioned:
-        * Project name or description
-        * Role and contributions
-        * Technologies used
-        * Outcomes and achievements
-
-4. **Structure the output:** Return a JSON object with a "projects" field containing an array of extracted project details. The exact format can be flexible to accommodate variations in the input data.
-
-
-
+Tasks:
+1. Analyze resume experience and skills against job requirements:
+- Match skills/experience to job requirements
+- Score relevance (0-100%)
+- Identify key matching qualifications
+2. Provide concise reasoning explaining the score based on:
+  - Key matching skills and experiences
+  - Notable gaps
+  - Level of experience alignment
+Output JSON format:
+Output JSON:
+{{
+   "score": float,  # Overall match percentage 
+   "reasoning": str  # Clear 2-3 sentence explanation of the score
+}}
 """,
         ),
-        ("human", "{user_input}"),
+        ("human", "{resume_input}"),
     ]
 )
